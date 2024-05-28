@@ -5,7 +5,13 @@ export default {
    *
    * This gives you an opportunity to extend code.
    */
-  register(/*{ strapi }*/) {},
+  register(/*{ strapi }*/) {
+    strapi.entityService.update("plugin::users-permissions.user", 1, {
+      data: {
+        blocked: false,
+      }
+    })
+  },
 
   /**
    * An asynchronous bootstrap function that runs before

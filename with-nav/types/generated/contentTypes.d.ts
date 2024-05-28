@@ -590,6 +590,53 @@ export interface PluginContentReleasesReleaseAction
   };
 }
 
+export interface PluginI18NLocale extends Schema.CollectionType {
+  collectionName: 'i18n_locale';
+  info: {
+    singularName: 'locale';
+    pluralName: 'locales';
+    collectionName: 'locales';
+    displayName: 'Locale';
+    description: '';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  pluginOptions: {
+    'content-manager': {
+      visible: false;
+    };
+    'content-type-builder': {
+      visible: false;
+    };
+  };
+  attributes: {
+    name: Attribute.String &
+      Attribute.SetMinMax<
+        {
+          min: 1;
+          max: 50;
+        },
+        number
+      >;
+    code: Attribute.String & Attribute.Unique;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'plugin::i18n.locale',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'plugin::i18n.locale',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
 export interface PluginUsersPermissionsPermission
   extends Schema.CollectionType {
   collectionName: 'up_permissions';
@@ -741,17 +788,49 @@ export interface PluginUsersPermissionsUser extends Schema.CollectionType {
   };
 }
 
-export interface PluginI18NLocale extends Schema.CollectionType {
-  collectionName: 'i18n_locale';
+export interface PluginNavigationAudience extends Schema.CollectionType {
+  collectionName: 'audience';
   info: {
-    singularName: 'locale';
-    pluralName: 'locales';
-    collectionName: 'locales';
-    displayName: 'Locale';
-    description: '';
+    singularName: 'audience';
+    pluralName: 'audiences';
+    displayName: 'Audience';
+    name: 'audience';
   };
   options: {
-    draftAndPublish: false;
+    increments: true;
+    comment: 'Audience';
+  };
+  attributes: {
+    name: Attribute.String & Attribute.Required;
+    key: Attribute.UID<'plugin::navigation.audience', 'name'>;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'plugin::navigation.audience',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'plugin::navigation.audience',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
+export interface PluginNavigationNavigation extends Schema.CollectionType {
+  collectionName: 'navigations';
+  info: {
+    singularName: 'navigation';
+    pluralName: 'navigations';
+    displayName: 'Navigation';
+    name: 'navigation';
+  };
+  options: {
+    increments: true;
+    comment: '';
   };
   pluginOptions: {
     'content-manager': {
@@ -762,25 +841,156 @@ export interface PluginI18NLocale extends Schema.CollectionType {
     };
   };
   attributes: {
-    name: Attribute.String &
-      Attribute.SetMinMax<
-        {
-          min: 1;
-          max: 50;
-        },
-        number
-      >;
-    code: Attribute.String & Attribute.Unique;
+    name: Attribute.Text & Attribute.Required;
+    slug: Attribute.UID & Attribute.Required;
+    visible: Attribute.Boolean & Attribute.DefaultTo<false>;
+    items: Attribute.Relation<
+      'plugin::navigation.navigation',
+      'oneToMany',
+      'plugin::navigation.navigation-item'
+    >;
+    localizations: Attribute.Relation<
+      'plugin::navigation.navigation',
+      'oneToMany',
+      'plugin::navigation.navigation'
+    >;
+    localeCode: Attribute.String;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'plugin::i18n.locale',
+      'plugin::navigation.navigation',
       'oneToOne',
       'admin::user'
     > &
       Attribute.Private;
     updatedBy: Attribute.Relation<
-      'plugin::i18n.locale',
+      'plugin::navigation.navigation',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
+export interface PluginNavigationNavigationItem extends Schema.CollectionType {
+  collectionName: 'navigations_items';
+  info: {
+    singularName: 'navigation-item';
+    pluralName: 'navigation-items';
+    displayName: 'Navigation Item';
+    name: 'navigation-item';
+  };
+  options: {
+    increments: true;
+    timestamps: true;
+    comment: 'Navigation Item';
+  };
+  pluginOptions: {
+    'content-manager': {
+      visible: false;
+    };
+    'content-type-builder': {
+      visible: false;
+    };
+    i18n: {
+      localized: false;
+    };
+  };
+  attributes: {
+    title: Attribute.Text &
+      Attribute.Required &
+      Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
+    type: Attribute.Enumeration<['INTERNAL', 'EXTERNAL', 'WRAPPER']> &
+      Attribute.DefaultTo<'INTERNAL'>;
+    path: Attribute.Text;
+    externalPath: Attribute.Text;
+    uiRouterKey: Attribute.String;
+    menuAttached: Attribute.Boolean & Attribute.DefaultTo<false>;
+    order: Attribute.Integer & Attribute.DefaultTo<0>;
+    collapsed: Attribute.Boolean & Attribute.DefaultTo<false>;
+    related: Attribute.Relation<
+      'plugin::navigation.navigation-item',
+      'oneToOne',
+      'plugin::navigation.navigations-items-related'
+    >;
+    parent: Attribute.Relation<
+      'plugin::navigation.navigation-item',
+      'oneToOne',
+      'plugin::navigation.navigation-item'
+    >;
+    master: Attribute.Relation<
+      'plugin::navigation.navigation-item',
+      'manyToOne',
+      'plugin::navigation.navigation'
+    >;
+    audience: Attribute.Relation<
+      'plugin::navigation.navigation-item',
+      'oneToMany',
+      'plugin::navigation.audience'
+    >;
+    additionalFields: Attribute.JSON & Attribute.DefaultTo<{}>;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'plugin::navigation.navigation-item',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'plugin::navigation.navigation-item',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
+export interface PluginNavigationNavigationsItemsRelated
+  extends Schema.CollectionType {
+  collectionName: 'navigations_items_related';
+  info: {
+    singularName: 'navigations-items-related';
+    pluralName: 'navigations-items-relateds';
+    displayName: 'Navigations Items Related';
+    name: 'navigations_items_related';
+  };
+  options: {
+    increments: true;
+    timestamps: false;
+    populateCreatorFields: false;
+  };
+  pluginOptions: {
+    'content-manager': {
+      visible: false;
+    };
+    'content-type-builder': {
+      visible: false;
+    };
+    i18n: {
+      localized: false;
+    };
+  };
+  attributes: {
+    related_id: Attribute.String & Attribute.Required;
+    related_type: Attribute.String & Attribute.Required;
+    field: Attribute.String & Attribute.Required;
+    order: Attribute.Integer & Attribute.Required;
+    master: Attribute.String & Attribute.Required;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'plugin::navigation.navigations-items-related',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'plugin::navigation.navigations-items-related',
       'oneToOne',
       'admin::user'
     > &
@@ -802,10 +1012,14 @@ declare module '@strapi/types' {
       'plugin::upload.folder': PluginUploadFolder;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
+      'plugin::i18n.locale': PluginI18NLocale;
       'plugin::users-permissions.permission': PluginUsersPermissionsPermission;
       'plugin::users-permissions.role': PluginUsersPermissionsRole;
       'plugin::users-permissions.user': PluginUsersPermissionsUser;
-      'plugin::i18n.locale': PluginI18NLocale;
+      'plugin::navigation.audience': PluginNavigationAudience;
+      'plugin::navigation.navigation': PluginNavigationNavigation;
+      'plugin::navigation.navigation-item': PluginNavigationNavigationItem;
+      'plugin::navigation.navigations-items-related': PluginNavigationNavigationsItemsRelated;
     }
   }
 }
